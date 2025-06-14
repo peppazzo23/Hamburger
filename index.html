@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Gestione Clienti Corriere</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+    <div class="top-decoration"></div>
+
+    <div class="menu-icon" id="menu-icon">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <span class="close-sidebar-btn" id="close-sidebar-btn">&times;</span>
+        <h2>Menu</h2>
+        <button id="sidebar-search-multiple-streets-btn">Cerca Clienti per Lista Vie</button>
+        <button id="backup-data-btn">Backup Dati (CSV)</button>
+        </div>
+
+    <div class="container">
+        <h1>Gestione Clienti Corriere</h1>
+
+        <button id="add-customer-btn">Aggiungi Nuovo Cliente</button>
+        <button id="search-customers-btn">Cerca Clienti per Via</button>
+        <button id="manage-customers-btn">Gestisci Clienti</button>
+
+        <div id="add-customer-section" class="hidden">
+            <h2>Aggiungi Nuovo Cliente</h2>
+            <label for="name">Nome Cliente:</label><br>
+            <input type="text" id="name" name="name" required><br><br>
+            <label for="phone">Numero di Telefono:</label><br>
+            <input type="tel" id="phone" name="phone"><br><br>
+            <label for="street">Via:</label><br>
+            <input type="text" id="street" name="street" required><br><br>
+            <label for="country">Paese:</label><br>
+            <input type="text" id="country" name="country"><br><br>
+            <label for="directions">Indicazioni:</label><br>
+            <textarea id="directions" name="directions"></textarea><br><br>
+            <button id="save-customer-btn">Salva Cliente</button>
+            <button id="cancel-add-btn">Annulla</button>
+        </div>
+
+        <div id="search-customers-section" class="hidden">
+            <h2>Cerca Clienti per Via</h2>
+            <label for="search-street">Cerca per Via:</label><br>
+            <input type="text" id="search-street" name="search-street"><br><br>
+            <button id="perform-search-btn">Cerca</button>
+            <div id="search-results"></div>
+            <button id="cancel-search-btn">Indietro</button>
+        </div>
+
+        <div id="search-multiple-streets-section" class="hidden">
+            <h2>Cerca per Lista Vie</h2>
+            <label for="multiple-streets-input">Inserisci le vie (una per riga):</label><br>
+            <textarea id="multiple-streets-input" name="multiple-streets-input" rows="10"></textarea><br><br>
+            <button id="perform-multiple-streets-search-btn">Cerca Voci</button>
+            <div id="multiple-streets-search-results"></div>
+            <button id="cancel-multiple-streets-search-btn">Indietro</button>
+        </div>
+
+        <div id="manage-customers-section" class="hidden">
+            <h2>Gestisci Clienti</h2>
+            <div id="customer-list"></div>
+            <button id="cancel-manage-btn">Indietro</button>
+        </div>
+    </div>
+
+    <div class="bottom-decoration"></div>
+
+    <div id="edit-customer-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Modifica Cliente</h2>
+            <span class="close-button">&times;</span>
+            <label for="edit-name">Nome Cliente:</label><br>
+            <input type="text" id="edit-name" name="edit-name" required><br><br>
+            <label for="edit-phone">Numero di Telefono:</label><br>
+            <input type="tel" id="edit-phone" name="edit-phone"><br><br>
+            <label for="edit-street">Via:</label><br>
+            <input type="text" id="edit-street" name="edit-street" required><br><br>
+            <label for="edit-country">Paese:</label><br>
+            <input type="text" id="edit-country" name="edit-country"><br><br>
+            <label for="edit-directions">Indicazioni:</label><br>
+            <textarea id="edit-directions" name="edit-directions"></textarea><br><br>
+            <button id="update-customer-btn">Salva Modifiche</button>
+            <button id="cancel-edit-btn">Annulla</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

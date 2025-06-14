@@ -1,0 +1,289 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    background-color: #f4f4f4; /* Colore di sfondo generale */
+    min-height: 100vh; /* Assicura che il body sia alto almeno quanto la viewport */
+    display: flex; /* Trasforma il body in un flex container */
+    flex-direction: column; /* Imposta la direzione dei figli in colonna */
+    justify-content: space-between; /* Distribuisce lo spazio tra gli elementi (top-decoration, container, bottom-decoration) */
+    align-items: center; /* Centra orizzontalmente il contenuto principale */
+    overflow-y: auto; /* Consente lo scroll verticale quando il contenuto è troppo grande */
+    /* Rimuovi la selezione del testo globale per un'esperienza più nativa */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.container {
+    max-width: 400px;
+    width: 90%; /* Rendi il container leggermente più flessibile su schermi piccoli */
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    flex-shrink: 0; /* Impedisce al container di restringersi troppo se c'è poco spazio */
+    z-index: 10; /* Assicurati che il container sia sopra gli elementi di sfondo */
+    margin: auto; /* Centra orizzontalmente il container all'interno dello spazio disponibile */
+    padding-bottom: 20px; /* Spazio in basso per i pulsanti */
+}
+
+/* Nuovi elementi per lo sfondo superiore e inferiore */
+.top-decoration, .bottom-decoration {
+    width: 100%;
+    height: 150px; /* Aumentata l'altezza per far spazio alle immagini. Puoi modificarla. */
+    background-color: transparent; /* Sfondo trasparente per far vedere l'immagine */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* Nasconde ciò che esce dai bordi */
+    flex-grow: 1; /* Permette alla decorazione di occupare lo spazio disponibile */
+    min-height: 100px; /* Altezza minima per le decorazioni, per evitare che si rimpiccioliscano troppo */
+}
+
+.top-decoration {
+    background-image: url('Giuseppe.png'); /* Immagine del camion, rinomina se il file ha un nome diverso */
+    background-repeat: no-repeat; /* Non ripetere l'immagine */
+    background-size: contain; /* L'immagine si adatta mantenendo le proporzioni */
+    background-position: center; /* Centra l'immagine all'interno della decorazione */
+    margin-bottom: 20px; /* Spazio tra decorazione e container */
+}
+
+.bottom-decoration {
+    background-image: url('mappa.png'); /* Immagine della mappa, rinomina se il file ha un nome diverso */
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+    margin-top: 20px; /* Spazio tra container e decorazione */
+}
+
+h1, h2 {
+    text-align: center;
+    color: #333;
+}
+
+button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+input[type="text"],
+input[type="tel"],
+textarea {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}
+
+.hidden {
+    display: none;
+}
+
+.customer-info {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    position: relative;
+}
+
+.customer-info button {
+    display: inline-block;
+    width: auto;
+    padding: 5px 10px;
+    margin-right: 5px;
+    font-size: 0.9em;
+}
+
+/* Stili per il Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100; /* Aumentato z-index per assicurarsi che sia sopra tutto */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+    justify-content: center;
+    align-items: center;
+    padding: 20px; /* Aggiungi padding per evitare che il contenuto tocchi i bordi su schermi piccoli */
+    box-sizing: border-box; /* Include padding nel calcolo della larghezza/altezza */
+}
+
+.modal:not(.hidden) {
+    display: flex;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    /* margin: auto; Rimosso margin: auto perché flexbox lo gestisce */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 90%; /* Aumentato leggermente per schermi più piccoli */
+    max-width: 500px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative;
+    overflow-y: auto; /* Permette lo scroll all'interno del modal se il contenuto è troppo lungo */
+    max-height: 90vh; /* Limita l'altezza massima del modal per evitare che riempia l'intero schermo */
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Stili per il Menù Hamburger */
+.menu-icon {
+    position: fixed;
+    top: 20px; /* Posizionalo sotto la barra di stato iOS */
+    left: 20px;
+    width: 30px;
+    height: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    z-index: 1000; /* Assicurati che sia sopra tutto */
+}
+
+.menu-icon .bar {
+    width: 100%;
+    height: 3px;
+    background-color: #007bff; /* Colore delle barre dell'icona */
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+/* Stili per la Sidebar (il menu a scomparsa) */
+.sidebar {
+    height: 100%;
+    width: 0; /* Inizialmente nascosta */
+    position: fixed;
+    z-index: 1001; /* Sopra l'icona e tutto il resto */
+    top: 0;
+    left: 0;
+    background-color: #111; /* Colore di sfondo scuro per il menu */
+    overflow-x: hidden;
+    transition: 0.5s; /* Animazione slide-in/slide-out */
+    padding-top: 60px; /* Spazio per l'icona di chiusura */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centra i pulsanti */
+    box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+}
+
+.sidebar.open {
+    width: 250px; /* Larghezza quando aperta */
+}
+
+.sidebar h2 {
+    color: white;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.sidebar button {
+    padding: 15px 25px;
+    text-decoration: none;
+    font-size: 18px;
+    color: white;
+    display: block;
+    transition: 0.3s;
+    background-color: transparent; /* I pulsanti nel menu non hanno sfondo blu */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* Bordo leggero */
+    margin-bottom: 15px; /* Spazio tra i pulsanti */
+    width: 80%; /* Occupa una buona parte della larghezza del menu */
+}
+
+.sidebar button:hover {
+    background-color: #0056b3; /* Sfondo blu al passaggio del mouse */
+    color: white;
+}
+
+.close-sidebar-btn {
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    font-size: 35px;
+    color: #818181;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.close-sidebar-btn:hover {
+    color: #f1f1f1;
+}
+
+/* Regolazione per la barra di stato iOS, per evitare che l'icona del menu si sovrapponga */
+@media (prefers-color-scheme: light) { /* Solo per iOS */
+    .menu-icon {
+        top: calc(env(safe-area-inset-top) + 20px);
+    }
+}
+@media (prefers-color-scheme: dark) { /* Solo per iOS */
+    .menu-icon {
+        top: calc(env(safe-area-inset-top) + 20px);
+    }
+}
+
+
+/* Media query per schermi più piccoli, se necessario */
+@media (max-width: 600px) {
+    .container {
+        width: 95%; /* Leggermente più largo su schermi molto piccoli */
+        padding: 15px;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 15px;
+    }
+
+    .sidebar.open {
+        width: 70%; /* Riduci la larghezza del menu su schermi molto piccoli */
+    }
+}
