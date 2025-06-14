@@ -36,12 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateCustomerBtn = document.getElementById('update-customer-btn');
     const cancelEditBtn = document.getElementById('cancel-edit-btn');
 
-    // NUOVI ELEMENTI DEL MENU
+    // ELEMENTI DEL MENU
     const menuIcon = document.getElementById('menu-icon');
     const sidebar = document.getElementById('sidebar');
     const closeSidebarBtn = document.getElementById('close-sidebar-btn');
-    const sidebarSearchMultipleStreetsBtn = document.getElementById('sidebar-search-multiple-streets-btn'); // Pulsante nel menu
-    const backupDataBtn = document.getElementById('backup-data-btn'); // Pulsante per il backup
+    const sidebarSearchMultipleStreetsBtn = document.getElementById('sidebar-search-multiple-streets-btn');
+    const backupDataBtn = document.getElementById('backup-data-btn');
+    const loadBackupBtn = document.getElementById('load-backup-btn'); // NUOVO PULSANTE PER CARICAMENTO
+    const backupFileInput = document.getElementById('backup-file-input'); // NUOVO INPUT FILE
 
     let customers = JSON.parse(localStorage.getItem('customers')) || [];
     let currentEditingCustomerId = null;
@@ -52,10 +54,9 @@ document.addEventListener('DOMContentLoaded', () => {
         searchCustomersSection.classList.add('hidden');
         searchMultipleStreetsSection.classList.add('hidden');
         manageCustomersSection.classList.add('hidden');
-        editCustomerModal.classList.add('hidden'); // Nascondi il modal
+        editCustomerModal.classList.add('hidden');
 
-        // Chiudi la sidebar quando cambi sezione
-        sidebar.classList.remove('open');
+        sidebar.classList.remove('open'); // Chiudi la sidebar
 
         if (section) {
             section.classList.remove('hidden');
@@ -103,15 +104,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Crea l'header del CSV
         const headers = ['ID', 'Nome', 'Telefono', 'Via', 'Paese', 'Indicazioni'];
         let csvContent = headers.join(',') + '\n';
 
-        // Aggiungi i dati dei clienti
         customers.forEach(customer => {
             const row = [
-                `"${customer.id}"`, // Includi ID per completezza, tra virgolette per sicurezza
-                `"${(customer.name || '').replace(/"/g, '""')}"`, // Gestisci virgolette doppie
+                `"${customer.id}"`,
+                `"${(customer.name || '').replace(/"/g, '""')}"`,
                 `"${(customer.phone || '').replace(/"/g, '""')}"`,
                 `"${(customer.street || '').replace(/"/g, '""')}"`,
                 `"${(customer.country || '').replace(/"/g, '""')}"`,
@@ -120,14 +119,10 @@ document.addEventListener('DOMContentLoaded', () => {
             csvContent += row.join(',') + '\n';
         });
 
-        // Crea un Blob (Binary Large Object) con il contenuto CSV
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-
-        // Crea un URL per il Blob e un link per il download
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        // Data e ora corrente per il nome del file
         const now = new Date();
         const dateString = now.getFullYear() + '-' +
                            (now.getMonth() + 1).toString().padStart(2, '0') + '-' +
@@ -137,13 +132,113 @@ document.addEventListener('DOMContentLoaded', () => {
                            now.getSeconds().toString().padStart(2, '0');
 
         a.download = `backup_clienti_${dateString}.csv`;
-        document.body.appendChild(a); // Aggiungi al DOM temporaneamente
-        a.click(); // Simula il click per avviare il download
-        document.body.removeChild(a); // Rimuovi l'elemento
-        URL.revokeObjectURL(url); // Libera la memoria
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
         alert('Backup dei dati generato con successo!');
-        showSection(null); // Torna alla schermata principale
+        showSection(null);
     });
+
+    // Logica per Caricare Backup Dati (CSV)
+    loadBackupBtn.addEventListener('click', () => {
+        // Avvisa l'utente che il caricamento sovrascriverà i dati esistenti
+        if (!confirm('ATTENZIONE: Caricando un backup, i dati attuali verranno SOVRASCRITTI. Sei sicuro di voler continuare?')) {
+            return;
+        }
+        // Attiva l'input file nascosto
+        backupFileInput.click();
+    });
+
+    backupFileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) {
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const csvContent = e.target.result;
+                const newCustomers = parseCSV(csvContent);
+
+                if (newCustomers && newCustomers.length > 0) {
+                    customers = newCustomers;
+                    localStorage.setItem('customers', JSON.stringify(customers));
+                    alert('Backup caricato e dati aggiornati con successo!');
+                    displayCustomers(); // Aggiorna la lista clienti se si è nella sezione di gestione
+                    showSection(null); // Torna alla schermata principale
+                } else {
+                    alert('Il file CSV sembra essere vuoto o non contiene dati validi.');
+                }
+            } catch (error) {
+                console.error('Errore durante la lettura o il parsing del file CSV:', error);
+                alert('Si è verificato un errore durante il caricamento del file. Assicurati che sia un file CSV valido.');
+            }
+        };
+        reader.onerror = () => {
+            alert('Errore durante la lettura del file.');
+        };
+        reader.readAsText(file);
+    });
+
+    // Funzione per il parsing del CSV (basata sulla struttura del tuo backup)
+    function parseCSV(csvString) {
+        const lines = csvString.split('\n').filter(line => line.trim() !== ''); // Filtra righe vuote
+        if (lines.length < 2) {
+            return []; // Meno di 2 righe significa solo header o file vuoto
+        }
+
+        const headers = lines[0].split(',').map(header => header.trim().replace(/"/g, ''));
+        const parsedCustomers = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const currentLine = lines[i];
+            const values = parseCSVLine(currentLine); // Utilizza una funzione per gestire le virgolette
+
+            if (values.length !== headers.length) {
+                console.warn(`Skipping malformed row: ${currentLine}`);
+                continue; // Salta righe che non corrispondono all'header
+            }
+
+            const customer = {
+                id: values[headers.indexOf('ID')] || generateUniqueId(), // Usa ID dal CSV o genera uno nuovo
+                name: values[headers.indexOf('Nome')] || '',
+                phone: values[headers.indexOf('Telefono')] || '',
+                street: values[headers.indexOf('Via')] || '',
+                country: values[headers.indexOf('Paese')] || '',
+                directions: values[headers.indexOf('Indicazioni')] || ''
+            };
+            parsedCustomers.push(customer);
+        }
+        return parsedCustomers;
+    }
+
+    // Funzione helper per parsare una singola riga CSV (gestisce virgolette e virgole all'interno dei campi)
+    function parseCSVLine(line) {
+        const result = [];
+        let inQuote = false;
+        let currentField = '';
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+                if (inQuote && i + 1 < line.length && line[i + 1] === '"') { // " doppio all'interno di un campo
+                    currentField += '"';
+                    i++; // Salta il secondo "
+                } else {
+                    inQuote = !inQuote;
+                }
+            } else if (char === ',' && !inQuote) {
+                result.push(currentField.trim());
+                currentField = '';
+            } else {
+                currentField += char;
+            }
+        }
+        result.push(currentField.trim()); // Aggiungi l'ultimo campo
+        return result.map(field => field.replace(/^"|"$/g, '')); // Rimuovi le virgolette esterne residue
+    }
 
 
     // Funzione per generare un ID univoco (timestamp)
@@ -170,7 +265,6 @@ document.addEventListener('DOMContentLoaded', () => {
             customers.push(newCustomer);
             localStorage.setItem('customers', JSON.stringify(customers));
             alert('Cliente salvato!');
-            // Resetta i campi del form
             document.getElementById('name').value = '';
             document.getElementById('phone').value = '';
             document.getElementById('street').value = '';
@@ -207,25 +301,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let foundCustomers = [];
-        // `matchedStreetsForGrouping` sarà un Set che conterrà le vie effettive dei clienti trovati,
-        // per raggruppare i risultati correttamente.
         let matchedStreetsForGrouping = new Set();
 
         searchStreets.forEach(searchStreet => {
             customers.forEach(customer => {
-                // Controlla se la via del cliente include la via di ricerca
                 if (customer.street.toLowerCase().includes(searchStreet)) {
-                    // Aggiungi il cliente solo se non è già stato aggiunto per questa ricerca multipla
                     if (!foundCustomers.some(c => c.id === customer.id)) {
                         foundCustomers.push(customer);
                     }
-                    // Aggiungi la via effettiva del cliente al set per il raggruppamento
                     matchedStreetsForGrouping.add(customer.street);
                 }
             });
         });
 
-        // Ordina i risultati per via e poi per nome del cliente
         foundCustomers.sort((a, b) => {
             const streetComparison = a.street.localeCompare(b.street);
             if (streetComparison !== 0) {
@@ -234,7 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return a.name.localeCompare(b.name);
         });
 
-        // Passa il set delle vie corrispondenti per il raggruppamento nella funzione di visualizzazione
         displaySearchResults(foundCustomers, multipleStreetsSearchResultsDiv, matchedStreetsForGrouping);
     });
 
@@ -245,7 +332,6 @@ document.addEventListener('DOMContentLoaded', () => {
             targetDiv.textContent = 'Nessun cliente trovato con i criteri di ricerca.';
         } else {
             if (groupResultsByStreet instanceof Set && groupResultsByStreet.size > 0) {
-                // Raggruppa i clienti per la loro "Via" effettiva
                 const groupedResults = {};
                 results.forEach(customer => {
                     const customerStreet = customer.street;
@@ -255,18 +341,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     groupedResults[customerStreet].push(customer);
                 });
 
-                // Ordina le vie raggruppate per visualizzazione (basandosi sul Set delle vie trovate)
                 const sortedStreetsToDisplay = Array.from(groupResultsByStreet).sort((a, b) => a.localeCompare(b));
 
                 sortedStreetsToDisplay.forEach(street => {
-                    // Assicurati che ci siano clienti per questa via nel raggruppamento
                     if (groupedResults[street]) {
                         const streetHeader = document.createElement('h3');
                         streetHeader.textContent = `Via: ${street}`;
                         streetHeader.style.marginTop = '20px';
                         targetDiv.appendChild(streetHeader);
 
-                        // Ordina i clienti all'interno di ogni via per nome
                         groupedResults[street].sort((a, b) => a.name.localeCompare(b.name));
 
                         groupedResults[street].forEach(customer => {
@@ -284,7 +367,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
             } else {
-                // Per la ricerca singola, mostra semplicemente l'elenco
                 results.forEach(customer => {
                     const customerDiv = document.createElement('div');
                     customerDiv.classList.add('customer-info');
