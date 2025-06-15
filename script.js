@@ -42,8 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeSidebarBtn = document.getElementById('close-sidebar-btn');
     const sidebarSearchMultipleStreetsBtn = document.getElementById('sidebar-search-multiple-streets-btn');
     const backupDataBtn = document.getElementById('backup-data-btn');
-    const loadBackupBtn = document.getElementById('load-backup-btn'); // NUOVO PULSANTE PER CARICAMENTO
-    const backupFileInput = document.getElementById('backup-file-input'); // NUOVO INPUT FILE
+    const loadBackupBtn = document.getElementById('load-backup-btn');
+    const backupFileInput = document.getElementById('backup-file-input');
 
     let customers = JSON.parse(localStorage.getItem('customers')) || [];
     let currentEditingCustomerId = null;
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const headers = ['ID', 'Nome', 'Telefono', 'Via', 'Paese', 'Indicazioni'];
-        let csvContent = headers.join(',') + '\n';
+        let csvContent = headers.join(',') + '\n'; // Usa la virgola per l'esportazione
 
         customers.forEach(customer => {
             const row = [
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `"${(customer.country || '').replace(/"/g, '""')}"`,
                 `"${(customer.directions || '').replace(/"/g, '""')}"`
             ];
-            csvContent += row.join(',') + '\n';
+            csvContent += row.join(',') + '\n'; // Usa la virgola per l'esportazione
         });
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error('Errore durante la lettura o il parsing del file CSV:', error);
-                alert('Si è verificato un errore durante il caricamento del file. Assicurati che sia un file CSV valido.');
+                alert('Si è verificato un errore durante il caricamento del file. Assicurati che sia un file CSV valido e nel formato atteso (virgola o punto e virgola come separatore).');
             }
         };
         reader.onerror = () => {
@@ -189,33 +189,67 @@ document.addEventListener('DOMContentLoaded', () => {
             return []; // Meno di 2 righe significa solo header o file vuoto
         }
 
-        const headers = lines[0].split(',').map(header => header.trim().replace(/"/g, ''));
+        // Determina il delimitatore basandosi sulla prima riga (header)
+        let delimiter = ',';
+        if (lines[0].includes(';')) {
+            delimiter = ';';
+        }
+
+        const headers = parseCSVLine(lines[0], delimiter).map(header => header.trim());
         const parsedCustomers = [];
+
+        // Mappa i nomi degli header standardizzati alle colonne del CSV
+        const headerMap = {
+            'ID': headers.indexOf('ID'),
+            'Nome': headers.indexOf('Nome'),
+            'Telefono': headers.indexOf('Telefono'),
+            'Via': headers.indexOf('Via'),
+            'Paese': headers.indexOf('Paese'),
+            'Indicazioni': headers.indexOf('Indicazioni')
+        };
+
+        // Verifica che gli header necessari siano presenti (almeno Nome e Via)
+        if (headerMap.Nome === -1 || headerMap.Via === -1) {
+             console.error("CSV Headers missing: 'Nome' or 'Via' not found.");
+             alert("Il file CSV non contiene le colonne 'Nome' o 'Via' obbligatorie.");
+             return [];
+        }
+
 
         for (let i = 1; i < lines.length; i++) {
             const currentLine = lines[i];
-            const values = parseCSVLine(currentLine); // Utilizza una funzione per gestire le virgolette
+            const values = parseCSVLine(currentLine, delimiter);
 
-            if (values.length !== headers.length) {
-                console.warn(`Skipping malformed row: ${currentLine}`);
-                continue; // Salta righe che non corrispondono all'header
+            // Ignora righe malformate o vuote
+            if (values.length === 0 || (values.length === 1 && values[0].trim() === '')) {
+                continue;
             }
 
+            // Un controllo semplificato per le colonne. Potrebbe non essere robusto al 100%
+            // se i campi contengono il delimitatore non quotato, ma copre la maggior parte dei casi.
+            // Ci aspettiamo almeno il numero di colonne definito dall'header mappato.
+            const minExpectedColumns = Math.max(...Object.values(headerMap).filter(idx => idx !== -1)) + 1;
+            if (values.length < minExpectedColumns) {
+                 console.warn(`Skipping potentially malformed row (column count mismatch or missing data): ${currentLine}`);
+                 continue;
+            }
+
+
             const customer = {
-                id: values[headers.indexOf('ID')] || generateUniqueId(), // Usa ID dal CSV o genera uno nuovo
-                name: values[headers.indexOf('Nome')] || '',
-                phone: values[headers.indexOf('Telefono')] || '',
-                street: values[headers.indexOf('Via')] || '',
-                country: values[headers.indexOf('Paese')] || '',
-                directions: values[headers.indexOf('Indicazioni')] || ''
+                id: values[headerMap.ID] ? values[headerMap.ID].replace(/"/g, '') : generateUniqueId(), // Usa ID dal CSV o genera uno nuovo
+                name: values[headerMap.Nome] ? values[headerMap.Nome].replace(/"/g, '') : '',
+                phone: values[headerMap.Telefono] ? values[headerMap.Telefono].replace(/"/g, '') : '',
+                street: values[headerMap.Via] ? values[headerMap.Via].replace(/"/g, '') : '',
+                country: values[headerMap.Paese] ? values[headerMap.Paese].replace(/"/g, '') : '',
+                directions: values[headerMap.Indicazioni] ? values[headerMap.Indicazioni].replace(/"/g, '') : ''
             };
             parsedCustomers.push(customer);
         }
         return parsedCustomers;
     }
 
-    // Funzione helper per parsare una singola riga CSV (gestisce virgolette e virgole all'interno dei campi)
-    function parseCSVLine(line) {
+    // Funzione helper per parsare una singola riga CSV (gestisce virgolette e delimitatori)
+    function parseCSVLine(line, delimiter) {
         const result = [];
         let inQuote = false;
         let currentField = '';
@@ -223,21 +257,23 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < line.length; i++) {
             const char = line[i];
             if (char === '"') {
-                if (inQuote && i + 1 < line.length && line[i + 1] === '"') { // " doppio all'interno di un campo
+                if (inQuote && i + 1 < line.length && line[i + 1] === '"') { // Tratta "" come un singolo "
                     currentField += '"';
                     i++; // Salta il secondo "
                 } else {
                     inQuote = !inQuote;
                 }
-            } else if (char === ',' && !inQuote) {
-                result.push(currentField.trim());
+            } else if (char === delimiter && !inQuote) {
+                result.push(currentField);
                 currentField = '';
             } else {
                 currentField += char;
             }
         }
-        result.push(currentField.trim()); // Aggiungi l'ultimo campo
-        return result.map(field => field.replace(/^"|"$/g, '')); // Rimuovi le virgolette esterne residue
+        result.push(currentField); // Aggiungi l'ultimo campo
+
+        // Pulisci e normalizza ogni campo dopo il parsing
+        return result.map(field => field.trim().replace(/^"|"$/g, '')); // Rimuovi le virgolette esterne residue
     }
 
 
