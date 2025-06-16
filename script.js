@@ -319,9 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
         displaySearchResults(results, searchResultsDiv);
     });
 
-    ---
-    ### Logica della Ricerca Multipla per Vie (Modificata)
-    ---
     // Ricerca per Lista Vie
     performMultipleStreetsSearchBtn.addEventListener('click', () => {
         const inputStreetsText = multipleStreetsInput.value.trim();
