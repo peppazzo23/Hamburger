@@ -319,6 +319,9 @@ document.addEventListener('DOMContentLoaded', () => {
         displaySearchResults(results, searchResultsDiv);
     });
 
+    ---
+    ### Logica della Ricerca Multipla per Vie (Modificata)
+    ---
     // Ricerca per Lista Vie
     performMultipleStreetsSearchBtn.addEventListener('click', () => {
         const inputStreetsText = multipleStreetsInput.value.trim();
@@ -337,19 +340,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let foundCustomers = [];
-        let matchedStreetsForGrouping = new Set();
+        const foundCustomerIds = new Set(); // Mantiene traccia degli ID dei clienti già aggiunti
+        let matchedStreetsForGrouping = new Set(); // Questo set dovrebbe contenere tutte le vie reali dei clienti che corrispondono a qualsiasi termine di ricerca
 
         searchStreets.forEach(searchStreet => {
             customers.forEach(customer => {
+                // Controlla se la via del cliente include la via di ricerca
                 if (customer.street.toLowerCase().includes(searchStreet)) {
-                    if (!foundCustomers.some(c => c.id === customer.id)) {
+                    // Aggiungi il cliente a foundCustomers solo se non è stato ancora aggiunto
+                    if (!foundCustomerIds.has(customer.id)) {
                         foundCustomers.push(customer);
+                        foundCustomerIds.add(customer.id);
                     }
+                    // Aggiungi sempre la via effettiva del cliente al set per il raggruppamento,
+                    // indipendentemente dal fatto che il cliente sia già stato aggiunto a foundCustomers.
                     matchedStreetsForGrouping.add(customer.street);
                 }
             });
         });
 
+        // Ordina i risultati per via e poi per nome del cliente
         foundCustomers.sort((a, b) => {
             const streetComparison = a.street.localeCompare(b.street);
             if (streetComparison !== 0) {
@@ -358,6 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return a.name.localeCompare(b.name);
         });
 
+        // Passa il set delle vie corrispondenti per il raggruppamento alla funzione di visualizzazione
         displaySearchResults(foundCustomers, multipleStreetsSearchResultsDiv, matchedStreetsForGrouping);
     });
 
